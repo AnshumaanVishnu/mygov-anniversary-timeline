@@ -1,0 +1,746 @@
+<!--
+    Project: MyGov 11th Anniversary Interactive Timeline
+    Creator: Anshumaan Vishnu (https://github.com/AnshumaanVishnu)
+    Date: July 26, 2025
+    Description: A personal project to celebrate and visualize the 11-year journey of MyGov India,
+                 showcasing key milestones and the power of citizen engagement.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyGov: 11 Years of Citizen Power</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light Gray Background */
+            color: #0f172a; /* MyGov Dark Blue/Slate */
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; }
+        ::-webkit-scrollbar-thumb { background: #F97316; /* MyGov Saffron */ border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #EA580C; }
+
+        /* Opening Section */
+        #opening-section {
+            background-image: url('https://images.unsplash.com/photo-1534299334295-853b20ffb426?q=80&w=2070&auto=format&fit=crop&onerror=this.onerror=null;this.src=\'https://placehold.co/1920x1080/000000/ffffff?text=India\'');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        /* Timeline active state */
+        .timeline-item.active {
+            background-color: #F97316;
+            color: white;
+            transform: scale(1.05) translateX(5px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+        }
+
+        /* New Animated Timeline Styles */
+        .journey-line-container {
+            position: absolute;
+            top: 0;
+            left: 24px; /* Position line on the left */
+            transform: translateX(-50%);
+            height: 100%;
+            width: 4px;
+            z-index: 1;
+        }
+        .journey-line {
+            width: 4px;
+            background: #e2e8f0;
+            height: 100%;
+        }
+        .journey-progress {
+            width: 100%;
+            background: #F97316;
+            height: 0;
+            transition: height 0.2s ease-out;
+        }
+        .content-section {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .content-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .year-marker {
+            position: absolute;
+            left: 24px; /* Align marker with the line */
+            top: 2.5rem; /* Align with the card title */
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            border: 4px solid #f8fafc;
+            transition: background-color 0.3s;
+            z-index: 2;
+        }
+        .content-section.visible .year-marker {
+            background-color: #F97316;
+        }
+
+        /* WhatsApp Chat styles */
+        .whatsapp-container {
+            background-image: url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg');
+            background-size: cover;
+        }
+        .chat-bubble {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+        .chat-bubble.left {
+            background-color: #fff;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        .chat-bubble.right {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        .chat-name {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        .chat-time {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            float: right;
+            margin-left: 8px;
+            margin-top: 4px;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #9ca3af;
+        }
+        /* Styling for Gemini API output */
+        #ideas-output .prose {
+            color: #334155;
+            text-align: justify;
+        }
+        #ideas-output .prose h3 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        #ideas-output .prose p {
+            margin-top: 0.25rem;
+        }
+        #ideas-output .prose strong {
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Opening Section -->
+    <section id="opening-section" class="h-screen w-screen flex flex-col justify-center items-center text-white text-center p-4 transition-opacity duration-1000 relative">
+        <div class="bg-black bg-opacity-70 p-6 md:p-10 rounded-2xl shadow-2xl max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight" style="color: #F97316;">11 Years of MyGov. <br/><span class="text-white">11 Years of Citizen Power!</span></h1>
+            <p class="mt-4 text-base md:text-xl font-light max-w-2xl mx-auto">
+                <a href="https://mygov.in" target="_blank" class="text-orange-300 hover:text-orange-400 font-semibold underline">MyGov India</a> is the world's largest citizen engagement platform, empowering people to connect with governance and contribute towards nation-building.
+            </p>
+            <p class="mt-2 text-base md:text-xl font-light">Explore the journey from a single click to a billion aspirations.</p>
+             <a href="https://x.com/hashtag/11YearsOfMyGov?src=hashtag_click" target="_blank" class="mt-6 inline-block bg-white bg-opacity-10 hover:bg-opacity-20 text-white font-semibold py-2 px-4 rounded-full text-lg transition-all duration-300">
+                #11YearsOfMyGov
+            </a>
+            <br/>
+            <button id="explore-btn" class="mt-8 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-xl transition-all duration-300 transform hover:scale-105 shadow-lg">
+                Explore Our Journey
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Interactive Section -->
+    <main id="main-section" class="hidden opacity-0 transition-opacity duration-1000 min-h-screen w-full">
+        <div class="container mx-auto p-4 md:p-8">
+            <!-- NEW HEADER SECTION -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-slate-800 tracking-tight">A Decade of Digital Democracy</h2>
+                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-500">Follow the year-by-year journey of MyGov's evolution from a groundbreaking idea to the world's largest platform for citizen engagement.</p>
+            </div>
+            <!-- END NEW HEADER SECTION -->
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                
+                <!-- Left: Timeline Navigation -->
+                <aside class="w-full lg:w-1/3 xl:w-1/4">
+                     <div class="sticky top-8">
+                        <h2 class="text-3xl font-bold mb-6 text-slate-800">The Journey</h2>
+                        <div id="timeline-container" class="space-y-2 pr-4">
+                           <!-- Timeline items will be dynamically inserted here -->
+                        </div>
+                     </div>
+                </aside>
+
+                <!-- Right: Animated Content -->
+                <div class="w-full lg:w-2/3 xl:w-3/4">
+                    <div class="relative">
+                        <!-- Content sections will be dynamically inserted here -->
+                        <div id="content-container" class="relative">
+                             <div class="journey-line-container">
+                                <div class="journey-line">
+                                    <div id="journey-progress-bar" class="journey-progress"></div>
+                                </div>
+                            </div>
+                            <!-- Year data injected by JS -->
+                        </div>
+
+                         <!-- Gemini API Section -->
+                        <section id="gemini-section" class="mt-16">
+                            <h2 class="text-3xl font-bold mb-2 text-center text-slate-800">Imagine the Future of Governance</h2>
+                            <p class="text-center text-slate-500 mb-8">What challenges should citizens and government tackle together next?</p>
+                            <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+                                <textarea id="challenge-input" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="e.g., improving city cleanliness, healthcare for rural areas..."></textarea>
+                                <button id="generate-ideas-btn" class="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center">
+                                    <span class="mr-2">✨ Generate Future Ideas</span>
+                                </button>
+                                <div id="ideas-output" class="mt-6 text-slate-700"></div>
+                            </div>
+                        </section>
+
+                         <!-- Voices of Support Section -->
+                        <section id="voices-section" class="mt-16">
+                            <h2 class="text-3xl font-bold mb-2 text-center text-slate-800">Anniversary Tributes</h2>
+                            <p class="text-center text-slate-500 mb-8">July 26, 2025</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <!-- Tweet Embed -->
+                                <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col">
+                                    <div class="flex items-center mb-4">
+                                        <img src="https://pbs.twimg.com/profile_images/1529321975759155201/2s5992bl_400x400.jpg" alt="The Modi Story" class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/334155?text=MS';">
+                                        <div>
+                                            <p class="font-bold">The Modi Story</p>
+                                            <p class="text-sm text-slate-500">@themodistory</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-slate-700 flex-grow">"MyGov has played a significant role in empowering citizens to become active partners in the governance of the country," says Awanish Kumar Awasthi, Advisor to UP CM Yogi Adityanath, as he congratulates MyGov on completing 11 years of success.</p>
+                                    <a href="https://x.com/themodistory/status/1949023032074289317" target="_blank" class="mt-4 text-orange-500 hover:text-orange-600 font-semibold self-start">View on X &rarr;</a>
+                                </div>
+
+                                <!-- LinkedIn Article Embed -->
+                                <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col">
+                                    <div class="flex items-center mb-4">
+                                        <img src="https://media.licdn.com/dms/image/D4D03AQHq_gG3-m2Abw/profile-displayphoto-shrink_100_100/0/1686116851991?e=1727308800&v=beta&t=8b-5O8G5z_j8y_l_q_R_p_q_Z_g_8_H_z_Q" alt="Prerita C." class="w-12 h-12 rounded-full mr-4" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/334155?text=PC';">
+                                        <div>
+                                            <p class="font-bold">Prerita C.</p>
+                                            <p class="text-sm text-slate-500">Head of Social Media & Content at MyGov India</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-slate-700 flex-grow">"Connecting the Dots: A Personal Reflection as MyGov Turns 11" - A look back at the journey and impact of India's citizen engagement platform.</p>
+                                    <a href="https://www.linkedin.com/pulse/connecting-dots-personal-reflection-mygov-turns-11-chauthaiwale-fqn2c/" target="_blank" class="mt-4 text-orange-500 hover:text-orange-600 font-semibold self-start">Read on LinkedIn &rarr;</a>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Team Wishes Section -->
+                        <section id="team-wishes-section" class="mt-16">
+                             <h2 class="text-3xl font-bold mb-8 text-center text-slate-800">Messages from the Team</h2>
+                             <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-slate-200">
+                                <div class="bg-gray-200 p-3 rounded-t-2xl">
+                                    <p class="text-center font-semibold">MyGov Team Wishes</p>
+                                </div>
+                                <div id="whatsapp-chat-container" class="p-4 h-96 overflow-y-auto flex flex-col gap-3 whatsapp-container">
+                                    <!-- WhatsApp messages will be dynamically added here -->
+                                </div>
+                             </div>
+                        </section>
+
+                        <!-- Disclaimer Section -->
+                        <section id="disclaimer-section" class="mt-16 text-center px-4">
+                             <div class="max-w-3xl mx-auto p-6 bg-slate-100 rounded-lg">
+                                 <p class="text-sm text-slate-600">
+                                    <b class="font-semibold text-slate-700">Disclaimer:</b> This is a non-commercial project created for demonstration and educational purposes. It is not officially associated with MyGov or any government entity. All copyrights, trademarks, and logos of MyGov and associated organizations belong to their respective owners. If you have any concerns, please <button id="contact-link-in-disclaimer" class="text-orange-500 underline hover:text-orange-600">contact me</button>.
+                                </p>
+                             </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer Section -->
+    <footer class="bg-slate-900 text-white mt-16">
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Column 1: Logo and Mission -->
+                <div class="lg:col-span-2">
+                    <h3 class="text-2xl font-bold text-white">MyGov: 11 Years of Citizen Power</h3>
+                    <p class="mt-2 text-slate-400 max-w-md">This project celebrates the remarkable 11-year journey of MyGov, showcasing its pivotal role in bridging the gap between citizens and governance in India through technology and participatory democracy.</p>
+                    <div class="mt-6 flex space-x-4">
+                        <a href="https://www.facebook.com/StartupsWala" target="_blank" class="text-slate-400 hover:text-orange-500 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v2.385z"/></svg></a>
+                        <a href="https://x.com/StartupsWala" target="_blank" class="text-slate-400 hover:text-orange-500 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+                        <a href="https://www.instagram.com/AnshumaanVishnu" target="_blank" class="text-slate-400 hover:text-orange-500 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.585-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.585-.012-4.85-.07c-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.85s.012-3.584.07-4.85c.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"/></svg></a>
+                        <a href="https://scholar.google.com/citations?user=qpGqDmgAAAAJ&hl=en" target="_blank" class="text-slate-400 hover:text-orange-500 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9 12 9s-5.548 2.249-6.758 4.769zM12 10c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6z"/></svg></a>
+                    </div>
+                </div>
+                <!-- Column 2: Quick Links -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Quick Links</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><button id="about-btn" class="text-slate-400 hover:text-orange-500 transition-colors text-left">About this Project</button></li>
+                        <li><a href="https://www.mygov.in/simple-page/contact-us/" target="_blank" class="text-slate-400 hover:text-orange-500 transition-colors">Visit MyGov</a></li>
+                        <li><button id="privacy-btn" class="text-slate-400 hover:text-orange-500 transition-colors text-left">Privacy Policy</button></li>
+                    </ul>
+                </div>
+                <!-- Column 3: Contact -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Creator</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><button id="contact-btn" class="text-slate-400 hover:text-orange-500 transition-colors text-left">Meet the Creator</button></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-8 border-slate-700">
+            <p class="text-center text-slate-500 text-sm">&copy; 2025 <a href="https://www.linkedin.com/in/anshumaanvishnu/" target="_blank" class="hover:text-orange-500">Anshumaan Vishnu</a>. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Share Button -->
+    <a id="whatsapp-share-btn" href="#" target="_blank" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-transform transform hover:scale-110 z-50">
+        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.687-1.475L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.655 4.398 1.908 6.188l.273.447-1.04 3.793 3.91-1.025.426.248zM12 4.138c4.913 0 8.921 4.008 8.921 8.921s-4.008 8.921-8.921 8.921-8.921-4.008-8.921-8.921 4.008-8.921 8.921-8.921zM15.111 12.285c-.053-.26-.184-.42-.357-.568-.173-.148-.363-.233-.564-.233-.201 0-.391.084-.55.232-.159.148-.636.61-.772.757-.136.148-.272.178-.429.03-.157-.148-.676-.248-1.288-.786-.478-.418-.788-.933-.882-1.08-.094-.148-.184-.363 0-.568.173-.178.363-.44.509-.59.146-.148.196-.26.29-.42.094-.148.043-.278-.029-.42-.072-.148-.636-1.532-.879-2.091-.242-.559-.485-.478-.66-.478-.173 0-.363-.03-.55.03-.187.06-.478.232-.636.42-.158.188-.636.757-.636 1.821 0 1.064.665 2.112.757 2.26.092.148 1.288 1.975 3.157 2.79.485.208.879.33 1.203.42.478.148.909.118 1.232-.059.352-.188 1.073-.44 1.232-.859.158-.418.158-.786.105-1.064z"/></svg>
+    </a>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="close-contact-modal-btn" class="modal-close">&times;</span>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Anshumaan Vishnu</h2>
+            <p class="text-slate-600 mb-6">A digital media enthusiast and entrepreneur with experience in managing strategic digital campaigns for government initiatives. This project reflects a passion for technology's role in citizen engagement and governance.</p>
+            <div class="flex justify-center space-x-6">
+                <a href="https://github.com/AnshumaanVishnu" target="_blank" class="text-slate-600 hover:text-orange-500 transition-colors">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                </a>
+                <a href="https://www.linkedin.com/in/anshumaanvishnu/" target="_blank" class="text-slate-600 hover:text-orange-500 transition-colors">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-4.481 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg>
+                </a>
+                 <a href="https://anshumaanvishnu.academia.edu/" target="_blank" class="text-slate-600 hover:text-orange-500 transition-colors">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 8.69L5.42 8 12 4.31 18.58 8 12 11.69z"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- About Modal -->
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="close-about-modal-btn" class="modal-close">&times;</span>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">About This Project</h2>
+            <p class="text-slate-600 mb-4">This interactive timeline celebrates the 11th anniversary of MyGov, the pioneering platform that has transformed citizen engagement in India. It showcases the journey of how a simple idea grew into the world's largest platform for participatory governance, highlighting key achievements and its profound impact on the nation.</p>
+            <p class="text-slate-600">The project aims to demonstrate the importance of such platforms in a democracy, chronicling the successful events and initiatives that have empowered millions of Indian citizens to become partners in nation-building.</p>
+        </div>
+    </div>
+    
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="close-privacy-modal-btn" class="modal-close">&times;</span>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Privacy Policy</h2>
+            <div class="text-slate-600 space-y-3 text-sm max-h-[60vh] overflow-y-auto pr-2">
+                <p>This Privacy Policy applies to this personal project website created by Anshumaan Vishnu. This policy was last updated on July 26, 2025.</p>
+                <p><b class="font-semibold">Information Collection and Use:</b> This is a static, non-commercial demonstration website. We do not collect, store, or process any personal data from visitors. There are no login forms, comment sections, or analytics trackers that would gather personal information.</p>
+                <p><b class="font-semibold">Cookies:</b> This website does not use cookies for tracking or data collection purposes.</p>
+                <p><b class="font-semibold">External Links:</b> This website contains links to external sites (such as official sources, social media, and professional profiles). Please be aware that we are not responsible for the content or privacy practices of such other sites. We encourage our users to be aware when they leave our site and to read the privacy statements of any other site that collects personally identifiable information.</p>
+                <p><b class="font-semibold">Governing Law:</b> Any claim relating to this website shall be governed by the laws of India without regard to its conflict of law provisions.</p>
+                <p><b class="font-semibold">Changes to This Policy:</b> We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /*
+     * MyGov 11th Anniversary Interactive Timeline
+     * Author: Anshumaan Vishnu (https://github.com/AnshumaanVishnu)
+     * Description: This script powers the interactive elements of the MyGov anniversary page,
+     * including the animated timeline, content population, modal pop-ups, and the Gemini API integration.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- DATA ---
+        const journeyData = [
+            {
+                year: 2014,
+                title: "The Genesis",
+                description: "On 26th July 2014, MyGov was launched by Hon’ble Prime Minister Shri Narendra Modi, creating a first-of-its-kind platform for citizen engagement in governance. It started as a novel experiment in democratic participation.",
+                stats: "100,000+ initial registrations",
+                source: "https://www.pib.gov.in/newsite/PrintRelease.aspx?relid=107538",
+            },
+            {
+                year: 2015,
+                title: "Building Blocks",
+                description: "The platform expanded its features, introducing more complex discussions, creative tasks, and polls. Key campaigns like 'Swachh Bharat' saw massive participation, embedding cleanliness as a national duty.",
+                stats: "1 Million+ Active Users",
+                source: "https://blog.mygov.in/editorial/digital-india-the-vision-and-the-mission/",
+            },
+            {
+                year: 2016,
+                title: "Policy & Participation",
+                description: "MyGov became a crucial tool for pre-legislative consultation. Citizens contributed ideas for the Union Budget and key national policies, making governance more inclusive and transparent.",
+                stats: "50+ Policies Influenced",
+                source: "https://services.india.gov.in/service/detail/mygov-a-platform-for-citizen-engagement-towards-good-governance-1",
+            },
+            {
+                year: 2017,
+                title: "Digital India Integration",
+                description: "With the rise of Digital India, MyGov integrated services like DigiLocker and became a central hub for digital citizen services, simplifying access to government resources.",
+                stats: "Unified Mobile App Launched",
+                source: "https://www.digitalindia.gov.in/meity-organisations/",
+            },
+            {
+                year: 2018,
+                title: "State-level Expansion",
+                description: "MyGov launched state-specific instances, bringing the model of participative governance to regional levels and addressing local issues with citizen collaboration.",
+                stats: "25 State MyGov Portals",
+                source: "https://www.digitalindia.gov.in/initiative/mygov/",
+            },
+            {
+                year: 2019,
+                title: "Election & Engagement",
+                description: "During the General Elections, MyGov played a vital role in voter awareness and combating misinformation. Post-election, it helped shape the new government's '100 Day Agenda'.",
+                stats: "Record-breaking engagement",
+                source: "https://www.mygov.in/group-issue/discussion-simultaneous-elections/",
+            },
+            {
+                year: 2020,
+                title: "COVID-19 Response Hub",
+                description: "MyGov transformed into the primary source for authentic information on COVID-19. The platform, along with the Aarogya Setu app, became a lifeline for millions of Indians.",
+                stats: "Billions of COVID-19 info hits",
+                source: "https://blog.mygov.in/aarogya-setu-transcending-digital-health-care/",
+            },
+            {
+                year: 2021,
+                title: "Vaccination & Volunteers",
+                description: "The platform was central to the world's largest vaccination drive, facilitating registrations and information dissemination. The 'COVID Warrior' program mobilized a million volunteers.",
+                stats: "100 Crore+ Vaccine Doses Facilitated",
+                source: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9693952/",
+            },
+            {
+                year: 2022,
+                title: "Azadi Ka Amrit Mahotsav",
+                description: "MyGov was at the heart of celebrating 75 years of India's independence, hosting nationwide campaigns like 'Har Ghar Tiranga' and collecting citizen stories and aspirations.",
+                stats: "5 Crore+ Tiranga Selfies",
+                source: "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1852066",
+            },
+            {
+                year: 2023,
+                title: "Global Recognition & G20",
+                description: "As India hosted the G20, MyGov showcased its model of digital democracy to the world. It became a case study for global citizen engagement platforms.",
+                stats: "Featured in Global Tech Summits",
+                source: "https://static.mygov.in/archive/g20/index.html",
+            },
+            {
+                year: 2024,
+                title: "A Decade of Digital Democracy",
+                description: "Celebrating 11 years, MyGov stands as a testament to participative governance. It continues to evolve with AI-driven features to foster deeper and more meaningful citizen collaboration.",
+                stats: "3 Crore+ Registered Users",
+                source: "https://www.mygov.in/overview/",
+            }
+        ];
+
+        const whatsappMessages = [
+            { name: "Sandeep Tayal", message: `Many Congratulations Team MyGov, as we complete our 11th Year today. Best wishes to each one of us for bigger, grander, wider and to remain the World's best citizen engagement platform.`, align: "right" },
+            { name: "Garima Tiwari", message: `11 kaa shagun, sabhi ke liye shubh ho 🙏 Congratulations 🎉 Team! Let's roar 💥 and script new heights of success and delivery. Har Har Mahadev 🙂🙏🏻`, align: "left" },
+            { name: "Vikas Kumar", message: `#HBDMeriSarkar 🎂🥳`, align: "right" },
+            { name: "Upendra Upadhyay", message: `Happy 11th. Congratulations to MyGov, and each member of our exceptional team, the unsung hero’s, that makes MyGov, the world’s largest and best Citizen Engagement Platform. Let’s keep striving hard as always, to achieve unmatchable milestones and engage with citizens in more vibrant ways 💐 Har Har Mahadev🙏`, align: "left" },
+            { name: "Sneha", message: `Happiest 11th MyGov 🎂`, align: "right" },
+            { name: "Priya Dhamani", message: `🇮🇳🎉 Happy 11th Birthday to MyGov! Super proud to be part of this amazing team. Big cheers to all the leaders & teammates who’ve brought MyGov this far 🙌 Let’s taking it even higher from here!   #TeamMyGov❤️`, align: "left" }
+        ];
+
+        // --- DOM ELEMENT REFERENCES ---
+        const openingSection = document.getElementById('opening-section');
+        const mainSection = document.getElementById('main-section');
+        const exploreBtn = document.getElementById('explore-btn');
+        const timelineContainer = document.getElementById('timeline-container');
+        const contentContainer = document.getElementById('content-container');
+        const whatsappChatContainer = document.getElementById('whatsapp-chat-container');
+        const journeyProgressBar = document.getElementById('journey-progress-bar');
+        const whatsappShareBtn = document.getElementById('whatsapp-share-btn');
+        const generateIdeasBtn = document.getElementById('generate-ideas-btn');
+        const challengeInput = document.getElementById('challenge-input');
+        const ideasOutput = document.getElementById('ideas-output');
+        
+        // Modals
+        const contactModal = document.getElementById('contact-modal');
+        const aboutModal = document.getElementById('about-modal');
+        const privacyModal = document.getElementById('privacy-modal');
+        
+        // Modal Triggers
+        const contactBtn = document.getElementById('contact-btn');
+        const contactLinkInDisclaimer = document.getElementById('contact-link-in-disclaimer');
+        const aboutBtn = document.getElementById('about-btn');
+        const privacyBtn = document.getElementById('privacy-btn');
+
+        // Modal Close Buttons
+        const closeContactModalBtn = document.getElementById('close-contact-modal-btn');
+        const closeAboutModalBtn = document.getElementById('close-about-modal-btn');
+        const closePrivacyModalBtn = document.getElementById('close-privacy-modal-btn');
+
+
+        // --- FUNCTIONS ---
+
+        function populateTimeline() {
+            journeyData.forEach(item => {
+                const timelineItem = document.createElement('a');
+                timelineItem.href = `#year-${item.year}`;
+                timelineItem.className = 'timeline-item p-4 rounded-lg cursor-pointer transition-all duration-300 hover:bg-orange-100 block';
+                timelineItem.dataset.year = item.year;
+                timelineItem.innerHTML = `<p class="font-bold text-lg">${item.year}</p><p class="text-sm">${item.title}</p>`;
+                timelineContainer.appendChild(timelineItem);
+            });
+        }
+
+        function populateContent() {
+            journeyData.forEach(item => {
+                const contentBlock = document.createElement('div');
+                contentBlock.id = `year-${item.year}`;
+                contentBlock.className = 'content-section relative pl-12 md:pl-16 pb-16';
+                contentBlock.innerHTML = `
+                    <div class="year-marker"></div>
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200 ml-4 relative z-5">
+                        <h3 class="text-2xl md:text-3xl font-bold text-slate-800">${item.year}: <span class="text-orange-500">${item.title}</span></h3>
+                        <p class="mt-4 text-base md:text-lg text-slate-600 leading-relaxed">${item.description}</p>
+                        <div class="mt-6 bg-orange-50 border-l-4 border-orange-500 text-orange-800 p-4 rounded-r-lg">
+                            <p class="font-semibold">${item.stats}</p>
+                        </div>
+                        <a href="${item.source}" target="_blank" class="inline-block mt-4 text-sm text-orange-500 hover:text-orange-600 font-semibold">Source &rarr;</a>
+                    </div>
+                `;
+                contentContainer.appendChild(contentBlock);
+            });
+        }
+
+        function populateWhatsAppChat() {
+            whatsappMessages.forEach((msg) => {
+                const bubbleWrapper = document.createElement('div');
+                bubbleWrapper.className = `flex flex-col ${msg.align === 'right' ? 'items-end' : 'items-start'}`;
+
+                const bubble = document.createElement('div');
+                const nameColor = msg.align === 'left' ? 'text-pink-600' : 'text-green-600';
+                bubble.className = `chat-bubble ${msg.align} shadow-md`;
+                bubble.innerHTML = `
+                    <p class="${nameColor} chat-name">${msg.name}</p>
+                    <p class="text-slate-800">${msg.message}</p>
+                    <span class="chat-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}</span>
+                `;
+                bubbleWrapper.appendChild(bubble);
+                whatsappChatContainer.appendChild(bubbleWrapper);
+            });
+
+            // Add the "Show More" button
+            const showMore = document.createElement('div');
+            showMore.className = 'flex justify-center mt-2';
+            showMore.innerHTML = `<button class="bg-gray-200 text-gray-600 text-sm font-semibold py-1 px-3 rounded-full cursor-pointer hover:bg-gray-300 transition-colors">Show More</button>`;
+            whatsappChatContainer.appendChild(showMore);
+
+            whatsappChatContainer.scrollTop = whatsappChatContainer.scrollHeight;
+        }
+
+        function handleScrollAnimation() {
+            const sections = document.querySelectorAll('#content-container .content-section');
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const journeyLineContainer = contentContainer.querySelector('.journey-line-container');
+            
+            let currentActiveYear = null;
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25) {
+                    section.classList.add('visible');
+                    currentActiveYear = section.id.replace('year-', '');
+                }
+            });
+            
+            // Update journey progress bar height
+            if(journeyLineContainer && sections.length > 0) {
+                const lastSection = sections[sections.length - 1];
+                const endOfLine = lastSection.offsetTop + lastSection.querySelector('.year-marker').offsetTop;
+                const scrollPosition = window.scrollY;
+                const mainTop = mainSection.offsetTop;
+                let progress = Math.max(0, scrollPosition - mainTop - sections[0].offsetTop);
+                let progressHeight = Math.min(progress, endOfLine);
+                journeyProgressBar.style.height = `${progressHeight}px`;
+            }
+
+            // Update timeline navigation active state
+            timelineItems.forEach(item => {
+                item.classList.toggle('active', item.dataset.year === currentActiveYear);
+            });
+        }
+        
+        function setupWhatsAppShare() {
+            const pageUrl = encodeURIComponent(window.location.href);
+            const message = encodeURIComponent("Check out this amazing journey of MyGov - 11 Years of Citizen Power!");
+            whatsappShareBtn.href = `https://api.whatsapp.com/send?text=${message}%20${pageUrl}`;
+        }
+
+        function setupModals() {
+            const openModal = (modal) => modal.classList.add('visible');
+            const closeModal = (modal) => modal.classList.remove('visible');
+            
+            // Contact Modal
+            contactBtn.addEventListener('click', () => openModal(contactModal));
+            contactLinkInDisclaimer.addEventListener('click', () => openModal(contactModal));
+            closeContactModalBtn.addEventListener('click', () => closeModal(contactModal));
+            
+            // About Modal
+            aboutBtn.addEventListener('click', () => openModal(aboutModal));
+            closeAboutModalBtn.addEventListener('click', () => closeModal(aboutModal));
+
+            // Privacy Modal
+            privacyBtn.addEventListener('click', () => openModal(privacyModal));
+            closePrivacyModalBtn.addEventListener('click', () => closeModal(privacyModal));
+            
+            // Close on overlay click
+            [contactModal, aboutModal, privacyModal].forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if(e.target === modal) {
+                        closeModal(modal);
+                    }
+                });
+            });
+        }
+        
+        function formatGeminiResponse(text) {
+            // Replace markdown bold with strong tags
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Replace markdown headers with h3 tags
+            text = text.replace(/### (.*?)(?:\n|$)/g, '<h3 class="text-lg font-semibold text-slate-800 mt-4">$1</h3>');
+
+            // Wrap paragraphs in <p> tags, handling numbered lists gracefully
+            const paragraphs = text.split('\n').filter(p => p.trim() !== '');
+            let html = paragraphs.map(p => {
+                // Check if it's a numbered list item and add margin
+                if (p.match(/^\d+\./)) {
+                    return `<p class="mt-4">${p}</p>`;
+                }
+                return `<p>${p}</p>`;
+            }).join('');
+            
+            return `<div class="prose prose-slate max-w-none text-justify">${html}</div>`;
+        }
+
+        async function handleGenerateIdeas() {
+            const userPrompt = challengeInput.value.trim();
+            if (!userPrompt) {
+                ideasOutput.innerHTML = `<p class="text-red-500">Please enter a challenge or idea to begin.</p>`;
+                return;
+            }
+
+            ideasOutput.innerHTML = `<div class="flex items-center justify-center text-slate-500"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Thinking of innovative ideas...</span></div>`;
+            generateIdeasBtn.disabled = true;
+
+            const fullPrompt = `Based on the principles of citizen engagement and digital democracy seen in MyGov, generate three innovative and actionable ideas for how citizens can help solve the challenge of "${userPrompt}" in the next decade. Format the response as a numbered list with a bold title for each idea. Do not use markdown characters like ### or ** in the final output.`;
+            
+            let chatHistory = [{ role: "user", parts: [{ text: fullPrompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = "AIzaSyDkY_g8P-WKxrARjyH-vubrB_bFzZ5V26Y";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const rawText = result.candidates[0].content.parts[0].text;
+                    const formattedHtml = formatGeminiResponse(rawText);
+                    ideasOutput.innerHTML = formattedHtml;
+                } else {
+                    ideasOutput.innerHTML = `<p class="text-red-500">Sorry, I couldn't generate ideas at this moment. Please try again.</p>`;
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                ideasOutput.innerHTML = `<p class="text-red-500">An error occurred. Please check the console for details.</p>`;
+            } finally {
+                generateIdeasBtn.disabled = false;
+            }
+        }
+
+
+        // --- EVENT LISTENERS & INITIALIZATION ---
+
+        exploreBtn.addEventListener('click', () => {
+            openingSection.classList.add('opacity-0');
+            openingSection.addEventListener('transitionend', () => {
+                openingSection.style.display = 'none';
+            }, { once: true });
+
+            mainSection.classList.remove('hidden');
+            setTimeout(() => {
+                mainSection.classList.remove('opacity-0');
+                handleScrollAnimation(); // Initial check to show first element
+            }, 50);
+        });
+        
+        generateIdeasBtn.addEventListener('click', handleGenerateIdeas);
+
+        populateTimeline();
+        populateContent();
+        populateWhatsAppChat();
+        setupWhatsAppShare();
+        setupModals();
+
+        window.addEventListener('scroll', handleScrollAnimation);
+    });
+    </script>
+</body>
+</html>
+ 
